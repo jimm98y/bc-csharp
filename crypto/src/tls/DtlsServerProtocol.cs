@@ -126,14 +126,6 @@ namespace Org.BouncyCastle.Tls
 
             {
                 byte[] serverHelloBody = GenerateServerHello(state, recordLayer);
-
-                // TODO[dtls13] Ideally, move this into GenerateServerHello once legacy_record_version clarified
-                {
-                    ProtocolVersion recordLayerVersion = serverContext.ServerVersion;
-                    recordLayer.ReadVersion = recordLayerVersion;
-                    recordLayer.SetWriteVersion(recordLayerVersion);
-                }
-
                 handshake.SendMessage(HandshakeType.server_hello, serverHelloBody);
             }
 
@@ -181,97 +173,101 @@ namespace Org.BouncyCastle.Tls
                 handshake.SendMessage(HandshakeType.supplemental_data, supplementalDataBody);
             }
 
-            state.keyExchange = TlsUtilities.InitKeyExchangeServer(serverContext, server);
-
-            state.serverCredentials = null;
-
-            if (!KeyExchangeAlgorithm.IsAnonymous(securityParameters.KeyExchangeAlgorithm))
+            if (!TlsUtilities.IsDtlsV13(serverContext.ServerVersion))
             {
-                state.serverCredentials = TlsUtilities.EstablishServerCredentials(server);
-            }
+                state.keyExchange = TlsUtilities.InitKeyExchangeServer(serverContext, server);
+                
+                state.serverCredentials = null;
 
-            // Server certificate
-            {
-                Certificate serverCertificate = null;
-
-                MemoryStream endPointHash = new MemoryStream();
-                if (state.serverCredentials == null)
+                if (!KeyExchangeAlgorithm.IsAnonymous(securityParameters.KeyExchangeAlgorithm))
                 {
-                    state.keyExchange.SkipServerCredentials();
+                    state.serverCredentials = TlsUtilities.EstablishServerCredentials(server);
                 }
-                else
+            
+                // Server certificate
                 {
-                    state.keyExchange.ProcessServerCredentials(state.serverCredentials);
+                    Certificate serverCertificate = null;
 
-                    serverCertificate = state.serverCredentials.Certificate;
-
-                    SendCertificateMessage(serverContext, handshake, serverCertificate, endPointHash);
-                }
-                securityParameters.m_tlsServerEndPoint = endPointHash.ToArray();
-
-                // TODO[RFC 3546] Check whether empty certificates is possible, allowed, or excludes CertificateStatus
-                if (serverCertificate == null || serverCertificate.IsEmpty)
-                {
-                    securityParameters.m_statusRequestVersion = 0;
-                }
-            }
-
-            if (securityParameters.StatusRequestVersion > 0)
-            {
-                CertificateStatus certificateStatus = server.GetCertificateStatus();
-                if (certificateStatus != null)
-                {
-                    byte[] certificateStatusBody = GenerateCertificateStatus(state, certificateStatus);
-                    handshake.SendMessage(HandshakeType.certificate_status, certificateStatusBody);
-                }
-            }
-
-            byte[] serverKeyExchange = state.keyExchange.GenerateServerKeyExchange();
-            if (serverKeyExchange != null)
-            {
-                handshake.SendMessage(HandshakeType.server_key_exchange, serverKeyExchange);
-            }
-
-            if (state.serverCredentials != null)
-            {
-                state.certificateRequest = server.GetCertificateRequest();
-
-                if (null == state.certificateRequest)
-                {
-                    /*
-                     * For static agreement key exchanges, CertificateRequest is required since
-                     * the client Certificate message is mandatory but can only be sent if the
-                     * server requests it.
-                     */
-                    if (!state.keyExchange.RequiresCertificateVerify)
-                        throw new TlsFatalAlert(AlertDescription.internal_error);
-                }
-                else
-                {
-                    if (TlsUtilities.IsTlsV12(serverContext)
-                        != (state.certificateRequest.SupportedSignatureAlgorithms != null))
+                    MemoryStream endPointHash = new MemoryStream();
+                    if (state.serverCredentials == null)
                     {
-                        throw new TlsFatalAlert(AlertDescription.internal_error);
-                    }
-
-                    state.certificateRequest = TlsUtilities.ValidateCertificateRequest(state.certificateRequest, state.keyExchange);
-
-                    TlsUtilities.EstablishServerSigAlgs(securityParameters, state.certificateRequest);
-
-                    if (ProtocolVersion.DTLSv12.Equals(securityParameters.NegotiatedVersion))
-                    {
-                        TlsUtilities.TrackHashAlgorithms(handshake.HandshakeHash, securityParameters.ServerSigAlgs);
-
-                        if (serverContext.Crypto.HasAnyStreamVerifiers(securityParameters.ServerSigAlgs))
-                        {
-                            handshake.HandshakeHash.ForceBuffering();
-                        }
+                        state.keyExchange.SkipServerCredentials();
                     }
                     else
                     {
-                        if (serverContext.Crypto.HasAnyStreamVerifiersLegacy(state.certificateRequest.CertificateTypes))
+                        state.keyExchange.ProcessServerCredentials(state.serverCredentials);
+
+                        serverCertificate = state.serverCredentials.Certificate;
+
+                        SendCertificateMessage(serverContext, handshake, serverCertificate, endPointHash);
+                    }
+                    securityParameters.m_tlsServerEndPoint = endPointHash.ToArray();
+
+                    // TODO[RFC 3546] Check whether empty certificates is possible, allowed, or excludes CertificateStatus
+                    if (serverCertificate == null || serverCertificate.IsEmpty)
+                    {
+                        securityParameters.m_statusRequestVersion = 0;
+                    }
+                }
+            
+
+                if (securityParameters.StatusRequestVersion > 0)
+                {
+                    CertificateStatus certificateStatus = server.GetCertificateStatus();
+                    if (certificateStatus != null)
+                    {
+                        byte[] certificateStatusBody = GenerateCertificateStatus(state, certificateStatus);
+                        handshake.SendMessage(HandshakeType.certificate_status, certificateStatusBody);
+                    }
+                }
+
+                byte[] serverKeyExchange = state.keyExchange.GenerateServerKeyExchange();
+                if (serverKeyExchange != null)
+                {
+                    handshake.SendMessage(HandshakeType.server_key_exchange, serverKeyExchange);
+                }
+
+                if (state.serverCredentials != null)
+                {
+                    state.certificateRequest = server.GetCertificateRequest();
+
+                    if (null == state.certificateRequest)
+                    {
+                        /*
+                         * For static agreement key exchanges, CertificateRequest is required since
+                         * the client Certificate message is mandatory but can only be sent if the
+                         * server requests it.
+                         */
+                        if (!state.keyExchange.RequiresCertificateVerify)
+                            throw new TlsFatalAlert(AlertDescription.internal_error);
+                    }
+                    else
+                    {
+                        if (TlsUtilities.IsTlsV12(serverContext)
+                            != (state.certificateRequest.SupportedSignatureAlgorithms != null))
                         {
-                            handshake.HandshakeHash.ForceBuffering();
+                            throw new TlsFatalAlert(AlertDescription.internal_error);
+                        }
+
+                        state.certificateRequest = TlsUtilities.ValidateCertificateRequest(state.certificateRequest, state.keyExchange);
+
+                        TlsUtilities.EstablishServerSigAlgs(securityParameters, state.certificateRequest);
+
+                        if (ProtocolVersion.DTLSv12.Equals(securityParameters.NegotiatedVersion))
+                        {
+                            TlsUtilities.TrackHashAlgorithms(handshake.HandshakeHash, securityParameters.ServerSigAlgs);
+
+                            if (serverContext.Crypto.HasAnyStreamVerifiers(securityParameters.ServerSigAlgs))
+                            {
+                                handshake.HandshakeHash.ForceBuffering();
+                            }
+                        }
+                        else
+                        {
+                            if (serverContext.Crypto.HasAnyStreamVerifiersLegacy(state.certificateRequest.CertificateTypes))
+                            {
+                                handshake.HandshakeHash.ForceBuffering();
+                            }
                         }
                     }
                 }
@@ -459,26 +455,28 @@ namespace Org.BouncyCastle.Tls
                     throw new TlsFatalAlert(AlertDescription.internal_error);
 
                 // TODO[dtls13] Read draft/RFC for guidance on the legacy_record_version field
-                //ProtocolVersion legacy_record_version = server_version.IsLaterVersionOf(ProtocolVersion.DTLSv12)
-                //    ? ProtocolVersion.DTLSv12
-                //    : server_version;
+                ProtocolVersion legacy_record_version = serverVersion.IsLaterVersionOf(ProtocolVersion.DTLSv12)
+                    ? ProtocolVersion.DTLSv12
+                    : serverVersion;
 
                 //recordLayer.SetWriteVersion(legacy_record_version);
                 securityParameters.m_negotiatedVersion = serverVersion;
             }
 
             // TODO[dtls13]
-            //if (ProtocolVersion.DTLSv13.IsEqualOrEarlierVersionOf(serverVersion))
-            //{
-            //    // See RFC 8446 D.4.
-            //    recordStream.SetIgnoreChangeCipherSpec(true);
+            if (ProtocolVersion.DTLSv13.IsEqualOrEarlierVersionOf(serverVersion))
+            {
+                // See RFC 8446 D.4.
+                recordLayer.SetIgnoreChangeCipherSpec(true);
 
-            //    recordStream.SetWriteVersion(ProtocolVersion.DTLSv12);
+                recordLayer.SetWriteVersion(ProtocolVersion.DTLSv12);
 
-            //    return Generate13ServerHello(clientHello, clientHelloMessage, false);
-            //}
+                securityParameters.m_serverSupportedGroups = server.GetSupportedGroups();
 
-            //recordStream.setWriteVersion(serverVersion);
+                return Generate13ServerHello(state, recordLayer);
+            }
+
+            recordLayer.SetWriteVersion(serverVersion);
 
             {
                 bool useGmtUnixTime = server.ShouldUseGmtUnixTime();
@@ -696,6 +694,239 @@ namespace Org.BouncyCastle.Tls
 
             ServerHello serverHello = new ServerHello(serverVersion, securityParameters.ServerRandom,
                 securityParameters.SessionID, securityParameters.CipherSuite, state.serverExtensions);
+
+            state.clientHello = null;
+
+            ApplyMaxFragmentLengthExtension(recordLayer, securityParameters.MaxFragmentLength);
+
+            MemoryStream buf = new MemoryStream();
+            serverHello.Encode(serverContext, buf);
+            return buf.ToArray();
+        }
+
+        private byte[] Generate13ServerHello(ServerHandshakeState state, DtlsRecordLayer recordLayer)
+        {
+            ProtocolVersion serverVersion = ProtocolVersion.DTLSv13;
+
+            TlsServer server = state.server;
+            TlsServerContextImpl serverContext = state.serverContext;
+            SecurityParameters securityParameters = serverContext.SecurityParameters;
+
+            var crypto = server.Crypto;
+            {
+                bool useGmtUnixTime = server.ShouldUseGmtUnixTime();
+
+                securityParameters.m_serverRandom = TlsProtocol.CreateRandomBlock(useGmtUnixTime, serverContext);
+
+                if (!serverVersion.Equals(ProtocolVersion.GetLatestDtls(server.GetProtocolVersions())))
+                {
+                    TlsUtilities.WriteDowngradeMarker(serverVersion, securityParameters.ServerRandom);
+                }
+            }
+
+            var clientHelloExtensions = state.clientHello.Extensions;
+
+            TlsSession sessionToResume = server.GetSessionToResume(state.clientHello.SessionID);
+
+            bool resumedSession = EstablishSession(state, sessionToResume);
+
+            if (resumedSession && !serverVersion.Equals(state.sessionParameters.NegotiatedVersion))
+            {
+                resumedSession = false;
+            }
+
+            // TODO Check the session cipher suite is selectable by the same rules that GetSelectedCipherSuite uses
+
+            // TODO Check the resumed session has a peer certificate if we NEED client-auth
+
+            if (!resumedSession)
+            {
+                CancelSession(state);
+
+                byte[] newSessionID = server.GetNewSessionID();
+                if (null == newSessionID)
+                {
+                    newSessionID = TlsUtilities.EmptyBytes;
+                }
+
+                state.tlsSession = TlsUtilities.ImportSession(newSessionID, null);
+            }
+
+            securityParameters.m_resumedSession = resumedSession;
+            securityParameters.m_sessionID = state.tlsSession.SessionID;
+
+            server.NotifySession(state.tlsSession);
+
+            TlsUtilities.NegotiatedVersionDtlsServer(serverContext);
+
+            {
+                int cipherSuite = ValidateSelectedCipherSuite(server.GetSelectedCipherSuite(),
+                    AlertDescription.internal_error);
+
+                if (!TlsUtilities.IsValidCipherSuiteSelection(state.clientHello.CipherSuites, cipherSuite) ||
+                    !TlsUtilities.IsValidVersionForCipherSuite(cipherSuite, securityParameters.NegotiatedVersion))
+                {
+                    throw new TlsFatalAlert(AlertDescription.internal_error);
+                }
+
+                TlsUtilities.NegotiatedCipherSuite(securityParameters, cipherSuite);
+            }
+
+            int[] clientSupportedGroups = securityParameters.ClientSupportedGroups;
+            int[] serverSupportedGroups = securityParameters.ServerSupportedGroups;
+            var clientShares = TlsExtensionsUtilities.GetKeyShareClientHello(clientHelloExtensions);
+            KeyShareEntry clientShare = null;
+
+            clientShare = TlsUtilities.SelectKeyShare(crypto, serverVersion, clientShares, clientSupportedGroups,
+                serverSupportedGroups);
+
+            if (null == clientShare)
+            {
+                // TODO
+            }
+
+            if (clientShare.NamedGroup != serverSupportedGroups[0])
+            {
+                /*
+                 * TODO[tls13] RFC 8446 4.2.7. As of TLS 1.3, servers are permitted to send the
+                 * "supported_groups" extension to the client. Clients MUST NOT act upon any
+                 * information found in "supported_groups" prior to successful completion of the
+                 * handshake but MAY use the information learned from a successfully completed
+                 * handshake to change what groups they use in their "key_share" extension in
+                 * subsequent connections. If the server has a group it prefers to the ones in the
+                 * "key_share" extension but is still willing to accept the ClientHello, it SHOULD
+                 * send "supported_groups" to update the client's view of its preferences; this
+                 * extension SHOULD contain all groups the server supports, regardless of whether
+                 * they are currently supported by the client.
+                 */
+            }
+
+            Dictionary<int, byte[]> serverHelloExtensions = new Dictionary<int, byte[]>();
+
+            {
+                IDictionary<int, byte[]> sessionServerExtensions = resumedSession
+                    ? state.sessionParameters.ReadServerExtensions()
+                    : server.GetServerExtensions();
+
+                state.serverExtensions = TlsExtensionsUtilities.EnsureExtensionsInitialised(sessionServerExtensions);
+            }
+
+            server.GetServerExtensionsForConnection(state.serverExtensions);
+
+            // DTLS 1.3
+            ProtocolVersion serverLegacyVersion = ProtocolVersion.DTLSv12;
+            TlsExtensionsUtilities.AddSupportedVersionsExtensionServer(serverHelloExtensions, serverVersion);
+
+            /*
+             * RFC 8446 Appendix D. Because TLS 1.3 always hashes in the transcript up to the server
+             * Finished, implementations which support both TLS 1.3 and earlier versions SHOULD indicate
+             * the use of the Extended Master Secret extension in their APIs whenever TLS 1.3 is used.
+             */
+            securityParameters.m_extendedMasterSecret = true;
+
+            //// Heartbeats
+            //if (null != state.heartbeat || HeartbeatMode.peer_allowed_to_send == state.heartbeatPolicy)
+            //{
+            //    TlsExtensionsUtilities.AddHeartbeatExtension(state.serverExtensions,
+            //        new HeartbeatExtension(state.heartbeatPolicy));
+            //}
+
+            securityParameters.m_applicationProtocol = TlsExtensionsUtilities.GetAlpnExtensionServer(
+                state.serverExtensions);
+            securityParameters.m_applicationProtocolSet = true;
+
+            if (state.serverExtensions.Count > 0)
+            {
+                securityParameters.m_encryptThenMac = TlsExtensionsUtilities.HasEncryptThenMacExtension(
+                    state.serverExtensions);
+
+                securityParameters.m_maxFragmentLength = TlsUtilities.ProcessMaxFragmentLengthExtension(
+                    resumedSession ? null : clientHelloExtensions, state.serverExtensions,
+                    AlertDescription.internal_error);
+
+                securityParameters.m_truncatedHmac = TlsExtensionsUtilities.HasTruncatedHmacExtension(
+                    state.serverExtensions);
+
+                if (!resumedSession)
+                {
+                    // TODO[tls13] See RFC 8446 4.4.2.1
+                    if (TlsUtilities.HasExpectedEmptyExtensionData(state.serverExtensions,
+                        ExtensionType.status_request_v2, AlertDescription.internal_error))
+                    {
+                        securityParameters.m_statusRequestVersion = 2;
+                    }
+                    else if (TlsUtilities.HasExpectedEmptyExtensionData(state.serverExtensions,
+                        ExtensionType.status_request, AlertDescription.internal_error))
+                    {
+                        securityParameters.m_statusRequestVersion = 1;
+                    }
+
+                    securityParameters.m_clientCertificateType = TlsUtilities.ProcessClientCertificateTypeExtension13(
+                        clientHelloExtensions, state.serverExtensions, AlertDescription.internal_error);
+                    securityParameters.m_serverCertificateType = TlsUtilities.ProcessServerCertificateTypeExtension13(
+                        clientHelloExtensions, state.serverExtensions, AlertDescription.internal_error);
+
+                    //state.expectSessionTicket = TlsUtilities.HasExpectedEmptyExtensionData(state.serverExtensions,
+                    //    ExtensionType.session_ticket, AlertDescription.internal_error);
+                }
+            }
+
+            securityParameters.m_encryptThenMac = false;
+            securityParameters.m_truncatedHmac = false;
+
+            /*
+             * TODO[tls13] RFC 8446 4.4.2.1. OCSP Status and SCT Extensions.
+             * 
+             * OCSP information is carried in an extension for a CertificateEntry.
+             */
+            securityParameters.m_statusRequestVersion =
+                clientHelloExtensions.ContainsKey(ExtensionType.status_request) ? 1 : 0;
+
+            state.expectSessionTicket = false;
+
+            //TlsSecret pskEarlySecret = null;
+            //if (null != selectedPsk)
+            //{
+            //    pskEarlySecret = selectedPsk.m_earlySecret;
+
+            //    this.m_selectedPsk13 = true;
+
+            //    TlsExtensionsUtilities.AddPreSharedKeyServerHello(serverHelloExtensions, selectedPsk.m_index);
+            //}
+
+            TlsSecret sharedSecret;
+            {
+                int namedGroup = clientShare.NamedGroup;
+
+                TlsAgreement agreement;
+                if (NamedGroup.RefersToASpecificCurve(namedGroup))
+                {
+                    agreement = crypto.CreateECDomain(new TlsECConfig(namedGroup)).CreateECDH();
+                }
+                else if (NamedGroup.RefersToASpecificFiniteField(namedGroup))
+                {
+                    agreement = crypto.CreateDHDomain(new TlsDHConfig(namedGroup, true)).CreateDH();
+                }
+                else
+                {
+                    throw new TlsFatalAlert(AlertDescription.internal_error);
+                }
+
+                byte[] key_exchange = agreement.GenerateEphemeral();
+                KeyShareEntry serverShare = new KeyShareEntry(namedGroup, key_exchange);
+                TlsExtensionsUtilities.AddKeyShareServerHello(serverHelloExtensions, serverShare);
+
+                agreement.ReceivePeerValue(clientShare.KeyExchange);
+                sharedSecret = agreement.CalculateSecret();
+            }
+
+            //TlsUtilities.Establish13PhaseSecrets(serverContext, pskEarlySecret, sharedSecret);
+
+            TlsUtilities.CheckExtensionData13(serverHelloExtensions, HandshakeType.server_hello,
+                AlertDescription.internal_error);
+
+            ServerHello serverHello = new ServerHello(serverLegacyVersion, securityParameters.ServerRandom,
+                securityParameters.SessionID, securityParameters.CipherSuite, serverHelloExtensions);
 
             state.clientHello = null;
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.1.11312.151
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8F54480-386E-4CE7-8C0E-537922E2A634}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,18 +16,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BouncyCastle.Crypto", "crypto\src\BouncyCastle.Crypto.csproj", "{25326952-177B-4D34-9448-3024AF0D7B46}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BouncyCastle.Crypto.Tests", "crypto\test\BouncyCastle.Crypto.Tests.csproj", "{4C1B7AC6-C338-4DB4-BB3A-E6B2F1882E7E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtlsClientSample", "crypto\DtlsClientSample\DtlsClientSample.csproj", "{ADC89321-9B16-DF28-430A-3AAD3FF77C47}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{5661A565-FC3A-416F-AAC1-A2C1259835A2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtlsServerSample", "crypto\DtlsServerSample\DtlsServerSample.csproj", "{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DtlsImpl", "DtlsImpl\DtlsImpl.csproj", "{3F2139D9-974C-4EDF-A30D-F21D6F523846}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TlsServerSample", "TlsServerSample\TlsServerSample.csproj", "{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UdpTestClient", "UdpTestClient\UdpTestClient.csproj", "{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,46 +36,9 @@ Global
 		{4C1B7AC6-C338-4DB4-BB3A-E6B2F1882E7E}.Publish|Any CPU.Build.0 = Publish|Any CPU
 		{4C1B7AC6-C338-4DB4-BB3A-E6B2F1882E7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C1B7AC6-C338-4DB4-BB3A-E6B2F1882E7E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Publish|Any CPU.ActiveCfg = Release|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Publish|Any CPU.ActiveCfg = Release|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Publish|Any CPU.ActiveCfg = Release|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Publish|Any CPU.ActiveCfg = Release|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Publish|Any CPU.ActiveCfg = Release|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{ADC89321-9B16-DF28-430A-3AAD3FF77C47} = {5661A565-FC3A-416F-AAC1-A2C1259835A2}
-		{AEE86245-DF9F-2A4F-C074-3DEB69A6A0D1} = {5661A565-FC3A-416F-AAC1-A2C1259835A2}
-		{3F2139D9-974C-4EDF-A30D-F21D6F523846} = {5661A565-FC3A-416F-AAC1-A2C1259835A2}
-		{7055FE16-4EC1-4ACE-81D5-F2F203512F9B} = {5661A565-FC3A-416F-AAC1-A2C1259835A2}
-		{DCD66A7B-BD2E-4365-B8BA-2E6EC343D5F6} = {5661A565-FC3A-416F-AAC1-A2C1259835A2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {491E9412-DD09-44EE-86A7-2D0C51842AFC}

@@ -493,9 +493,9 @@ namespace Org.BouncyCastle.Tls
                 state.clientExtensions);
 
             // TODO[dtls13]
-            state.clientBinders = TlsUtilities.AddPreSharedKeyToClientHello(clientContext, client,
-                state.clientExtensions, state.offeredCipherSuites);
-            //state.clientBinders = null;
+            //state.clientBinders = TlsUtilities.AddPreSharedKeyToClientHello(clientContext, client,
+            //    state.clientExtensions, state.offeredCipherSuites);
+            state.clientBinders = null;
 
             // TODO[tls13-psk] Perhaps don't add key_share if external PSK(s) offered and 'psk_dhe_ke' not offered
             state.clientAgreements = TlsUtilities.AddKeyShareToClientHello(clientContext, client,
@@ -567,13 +567,6 @@ namespace Org.BouncyCastle.Tls
              */
             MemoryStream buf = new MemoryStream();
             clientHello.Encode(clientContext, buf);
-
-            if (null != state.clientBinders)
-            {
-                var handshakeHash = new DeferredHash(clientContext);
-                OfferedPsks.EncodeBinders(buf, clientContext.Crypto, handshakeHash, state.clientBinders);
-            }
-
             return buf.ToArray();
         }
 

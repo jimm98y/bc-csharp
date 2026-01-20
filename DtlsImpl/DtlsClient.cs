@@ -34,7 +34,7 @@ namespace SharpSRTP.DTLS
     public class DtlsClient : DefaultTlsClient, IDtlsPeer
     {
         private readonly object _syncRoot = new object();
-        protected DatagramTransport _clientDatagramTransport; // valid only for the current session
+        protected DatagramTransport _clientDatagramTransport = null;
         private TlsSession _session;
 
         public bool AutogenerateCertificate { get; set; } = true;
@@ -52,7 +52,7 @@ namespace SharpSRTP.DTLS
         public event EventHandler<DtlsHandshakeCompletedEventArgs> OnHandshakeCompleted;
         public event EventHandler<DtlsAlertEventArgs> OnAlert;
 
-        public DtlsClient(TlsSession session = null, Certificate certificate = null, AsymmetricKeyParameter privateKey = null, short certificateSignatureAlgorithm = SignatureAlgorithm.ecdsa, short certificateHashAlgorithm = HashAlgorithm.sha256) 
+        public DtlsClient(TlsSession session = null, Certificate certificate = null, AsymmetricKeyParameter privateKey = null, short certificateSignatureAlgorithm = SignatureAlgorithm.ecdsa, short certificateHashAlgorithm = HashAlgorithm.sha256)
             : this(new BcTlsCrypto(), session, certificate, privateKey, certificateSignatureAlgorithm, certificateHashAlgorithm)
         { }
 
@@ -89,13 +89,12 @@ namespace SharpSRTP.DTLS
         protected override ProtocolVersion[] GetSupportedVersions()
         {
             //return ProtocolVersion.DTLSv13.DownTo(ProtocolVersion.DTLSv12);
-            return ProtocolVersion.DTLSv13.Only(); // ProtocolVersion.IsSupportedDtlsVersionClient currently does not support DTLS 1.3
+            return ProtocolVersion.DTLSv12.Only(); // ProtocolVersion.IsSupportedDtlsVersionClient currently does not support DTLS 1.3
         }
 
         protected override int[] GetSupportedCipherSuites()
         {
             // TODO: review
-            /*
             if (CertificateSignatureAlgorithm == SignatureAlgorithm.rsa)
             {
                 return new int[]
@@ -113,7 +112,7 @@ namespace SharpSRTP.DTLS
                     CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
                 };
             }
-            else if(CertificateSignatureAlgorithm == SignatureAlgorithm.ecdsa)
+            else if (CertificateSignatureAlgorithm == SignatureAlgorithm.ecdsa)
             {
                 // ECDSA certificates require matching cipher suites
                 return new int[]
@@ -135,14 +134,6 @@ namespace SharpSRTP.DTLS
             {
                 throw new NotSupportedException();
             }
-            */
-            return new int[]
-                {
-                    // TLS 1.3 ciphers:
-                    //CipherSuite.TLS_AES_256_GCM_SHA384,
-                    CipherSuite.TLS_AES_128_GCM_SHA256,
-                    CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-                };
         }
 
         public virtual DtlsTransport DoHandshake(out string handshakeError, DatagramTransport datagramTransport, DtlsRequest request = null)
@@ -369,7 +360,7 @@ namespace SharpSRTP.DTLS
                     return null;
                 }
 
-                if(_client.Certificate == null || _client.CertificatePrivateKey == null)
+                if (_client.Certificate == null || _client.CertificatePrivateKey == null)
                 {
                     if (_client.AutogenerateCertificate)
                     {
@@ -396,7 +387,7 @@ namespace SharpSRTP.DTLS
                     }
                 }
 
-                if(signatureAndHashAlgorithm == null)
+                if (signatureAndHashAlgorithm == null)
                 {
                     throw new InvalidOperationException("DTLS Client does not support the selected certificate algorithm!");
                 }
@@ -432,7 +423,7 @@ namespace SharpSRTP.DTLS
             {
                 return true;
             }
-            
+
             return false;
         }
     }

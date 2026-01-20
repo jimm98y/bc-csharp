@@ -107,7 +107,9 @@ namespace SharpSRTP.DTLS
 
             var crypto = new BcTlsCrypto();
             var tlsCertificate = crypto.CreateCertificate(x509Certificate.GetEncoded());
-            var certificate = new Certificate(TlsUtilities.EmptyBytes, new[] { new CertificateEntry(tlsCertificate, null) });
+
+            // certificateRequestContext = TlsUtilities.EmptyBytes for TLS/DTLS 1.3, null for TLS/DTLS 1.2
+            var certificate = new Certificate(null, new[] { new CertificateEntry(tlsCertificate, null) });
 
             return (certificate, privateKey);
         }
@@ -166,7 +168,9 @@ namespace SharpSRTP.DTLS
 
             var crypto = new BcTlsCrypto();
             var tlsCertificate = crypto.CreateCertificate(x509Certificate.GetEncoded());
-            var certificate = new Certificate(TlsUtilities.EmptyBytes, new[] { new CertificateEntry(tlsCertificate, null) });
+
+            // certificateRequestContext = TlsUtilities.EmptyBytes for TLS/DTLS 1.3, null for TLS/DTLS 1.2
+            var certificate = new Certificate(null, new[] { new CertificateEntry(tlsCertificate, null) });
 
             return (certificate, privateKey);
         }
@@ -191,8 +195,25 @@ namespace SharpSRTP.DTLS
 
         public static bool IsHashSupported(string algStr)
         {
-            string algName = algStr.ToUpperInvariant();
-            return algName == "SHA-256" || algName == "SHA256";
+            if (string.IsNullOrEmpty(algStr))
+            {
+                throw new ArgumentNullException(nameof(algStr));
+            }
+
+            IDigest digest = null;
+
+            try
+            {
+                // It looks like currently there is no better way to check if a digest is supported by BouncyCastle.
+                // This method has an unfortunate consequence of actually creating the digest, so the call is expensive.
+                digest = DigestUtilities.GetDigest(algStr.ToUpperInvariant());
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return digest != null;
         }
     }
 }

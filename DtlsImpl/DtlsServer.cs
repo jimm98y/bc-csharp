@@ -27,14 +27,13 @@ using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SharpSRTP.DTLS
 {
     public class DtlsServer : DefaultTlsServer, IDtlsPeer
     {
         private readonly object _syncRoot = new object();
-        protected DatagramTransport _clientDatagramTransport; // valid only for the current session
+        protected DatagramTransport _clientDatagramTransport = null;
 
         public int TimeoutMilliseconds { get; set; } = 20000;
 
@@ -47,9 +46,9 @@ namespace SharpSRTP.DTLS
         public event EventHandler<DtlsHandshakeCompletedEventArgs> OnHandshakeCompleted;
         public event EventHandler<DtlsAlertEventArgs> OnAlert;
 
-        public DtlsServer(Certificate certificate = null, AsymmetricKeyParameter privateKey = null, short certificateSignatureAlgorithm = SignatureAlgorithm.ecdsa, short certificateHashAlgorithm = HashAlgorithm.sha256) : 
+        public DtlsServer(Certificate certificate = null, AsymmetricKeyParameter privateKey = null, short certificateSignatureAlgorithm = SignatureAlgorithm.ecdsa, short certificateHashAlgorithm = HashAlgorithm.sha256) :
             this(new BcTlsCrypto(), certificate, privateKey, certificateSignatureAlgorithm, certificateHashAlgorithm)
-        {  }
+        { }
 
         public DtlsServer(TlsCrypto crypto, Certificate certificate = null, AsymmetricKeyParameter privateKey = null, short certificateSignatureAlgorithm = SignatureAlgorithm.ecdsa, short certificateHashAlgorithm = HashAlgorithm.sha256) : base(crypto)
         {
@@ -91,17 +90,11 @@ namespace SharpSRTP.DTLS
         protected override ProtocolVersion[] GetSupportedVersions()
         {
             //return ProtocolVersion.DTLSv13.DownTo(ProtocolVersion.DTLSv12);
-            return ProtocolVersion.DTLSv13.Only(); // ProtocolVersion.IsSupportedDtlsVersionServer currently does not support DTLS 1.3
-        }
-
-        public override int[] GetSupportedGroups()
-        {
-            return base.GetSupportedGroups();
+            return ProtocolVersion.DTLSv12.Only(); // ProtocolVersion.IsSupportedDtlsVersionServer currently does not support DTLS 1.3
         }
 
         protected override int[] GetSupportedCipherSuites()
         {
-            /*
             if (CertificateSignatureAlgorithm == SignatureAlgorithm.rsa)
             {
                 return new int[]
@@ -120,9 +113,9 @@ namespace SharpSRTP.DTLS
                 return new int[]
                 {
                     // TLS 1.3 ciphers:
-                    CipherSuite.TLS_AES_256_GCM_SHA384,
-                    CipherSuite.TLS_AES_128_GCM_SHA256,
-                    CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+                    //CipherSuite.TLS_AES_256_GCM_SHA384,
+                    //CipherSuite.TLS_AES_128_GCM_SHA256,
+                    //CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
 
                     // TLS 1.2 ciphers:
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -136,14 +129,6 @@ namespace SharpSRTP.DTLS
             {
                 throw new InvalidOperationException($"DTLS server certificate algorithm {CertificateSignatureAlgorithm} not supported!");
             }
-            */
-            return new int[]
-                {
-                    // TLS 1.3 ciphers:
-                    CipherSuite.TLS_AES_256_GCM_SHA384,
-                    CipherSuite.TLS_AES_128_GCM_SHA256,
-                    CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-                };
         }
 
         public virtual DtlsTransport DoHandshake(out string handshakeError, DatagramTransport datagramTransport, DtlsRequest request = null)
@@ -230,9 +215,14 @@ namespace SharpSRTP.DTLS
             return serverVersion;
         }
 
+        public override int GetHandshakeTimeoutMillis()
+        {
+            return TimeoutMilliseconds;
+        }
+
         public override CertificateRequest GetCertificateRequest()
         {
-            short[] certificateTypes = new short[]{ ClientCertificateType.ecdsa_sign, ClientCertificateType.rsa_sign };
+            short[] certificateTypes = new short[] { ClientCertificateType.ecdsa_sign, ClientCertificateType.rsa_sign };
 
             IList<SignatureAndHashAlgorithm> serverSigAlgs = null;
             if (TlsUtilities.IsSignatureAlgorithmsExtensionAllowed(m_context.ServerVersion))
@@ -376,7 +366,7 @@ namespace SharpSRTP.DTLS
                 }
             }
 
-            if(signatureAndHashAlgorithm == null)
+            if (signatureAndHashAlgorithm == null)
             {
                 throw new InvalidOperationException("DTLS Client does not support the selected certificate algorithm!");
             }

@@ -18,12 +18,12 @@ namespace Org.BouncyCastle.Tls
 
         internal static readonly ProtocolVersion CLIENT_EARLIEST_SUPPORTED_DTLS = DTLSv10;
         internal static readonly ProtocolVersion CLIENT_EARLIEST_SUPPORTED_TLS = SSLv3;
-        internal static readonly ProtocolVersion CLIENT_LATEST_SUPPORTED_DTLS = DTLSv13;
+        internal static readonly ProtocolVersion CLIENT_LATEST_SUPPORTED_DTLS = DTLSv12;
         internal static readonly ProtocolVersion CLIENT_LATEST_SUPPORTED_TLS = TLSv13;
 
         internal static readonly ProtocolVersion SERVER_EARLIEST_SUPPORTED_DTLS = DTLSv10;
         internal static readonly ProtocolVersion SERVER_EARLIEST_SUPPORTED_TLS = SSLv3;
-        internal static readonly ProtocolVersion SERVER_LATEST_SUPPORTED_DTLS = DTLSv13;
+        internal static readonly ProtocolVersion SERVER_LATEST_SUPPORTED_DTLS = DTLSv12;
         internal static readonly ProtocolVersion SERVER_LATEST_SUPPORTED_TLS = TLSv13;
 
         public static bool Contains(ProtocolVersion[] versions, ProtocolVersion version)

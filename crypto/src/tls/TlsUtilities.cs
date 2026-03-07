@@ -284,11 +284,6 @@ namespace Org.BouncyCastle.Tls
             return ProtocolVersion.TLSv13.IsEqualOrEarlierVersionOf(version.GetEquivalentTlsVersion());
         }
 
-        public static bool IsDtlsV13(ProtocolVersion version)
-        {
-            return ProtocolVersion.DTLSv13.IsEqualOrEarlierVersionOf(version);
-        }
-
         public static bool IsTlsV13(TlsContext context)
         {
             return IsTlsV13(context.ServerVersion);
@@ -5560,7 +5555,7 @@ namespace Org.BouncyCastle.Tls
         internal static OfferedPsks.BindersConfig AddPreSharedKeyToClientHello(TlsClientContext clientContext,
             TlsClient client, IDictionary<int, byte[]> clientExtensions, int[] offeredCipherSuites)
         {
-            if (!IsTlsV13(clientContext.ClientVersion) && !IsDtlsV13(clientContext.ClientVersion))
+            if (!IsTlsV13(clientContext.ClientVersion))
                 return null;
 
             TlsPskExternal[] pskExternals = GetPskExternalsClient(client, offeredCipherSuites);

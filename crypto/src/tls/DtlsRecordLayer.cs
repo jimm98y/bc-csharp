@@ -116,7 +116,6 @@ namespace Org.BouncyCastle.Tls
 
         private int m_heartbeatResendMillis = -1;               // Delay before retransmit of current in-flight heartbeat request
         private Timeout m_heartbeatResendTimeout = null;        // Timeout for next retransmit of the in-flight heartbeat request
-        private bool m_ignoreChangeCipherSpec = false;
 
         internal DtlsRecordLayer(TlsContext context, TlsPeer peer, DatagramTransport transport)
         {
@@ -692,11 +691,6 @@ namespace Org.BouncyCastle.Tls
             // TODO[dtls13] Deal with opaque record type for 1.3 AEAD ciphers
             short recordType = TlsUtilities.ReadUint8(record, 0);
 
-            if(recordType == ContentType.change_cipher_spec && m_ignoreChangeCipherSpec)
-            {
-                return -1;
-            }
-
             switch (recordType)
             {
             case ContentType.alert:
@@ -1171,11 +1165,6 @@ namespace Org.BouncyCastle.Tls
         private static long GetMacSequenceNumber(int epoch, long sequence_number)
         {
             return ((epoch & 0xFFFFFFFFL) << 48) | sequence_number;
-        }
-
-        internal void SetIgnoreChangeCipherSpec(bool ignoreChangeCipherSpec)
-        {
-            this.m_ignoreChangeCipherSpec = ignoreChangeCipherSpec;
         }
     }
 }
